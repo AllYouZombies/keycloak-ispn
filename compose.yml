@@ -104,7 +104,7 @@ services:
       - ./config/keycloak/realms/:/opt/keycloak/data/import/
 
   haproxy:
-    image: cr.smartbank.uz/dockerhub/haproxy:lts-alpine
+    image: haproxy:lts-alpine
     command: >
       sh -c '
       echo "
