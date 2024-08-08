@@ -28,7 +28,7 @@ There are 3 ways to deploy this cluster:
 First of all, you have to build the KeyCloak image:
 
 ```bash
-docker compose build
+docker compose build keycloak
 ```
 
 There are 3 reasons for this:
@@ -40,6 +40,9 @@ There are 3 reasons for this:
    This file is used to configure the Infinispan cache provider.
 3. To perform **health checks** on the KeyCloak instances,  
    we need to install the `curl` package in the image.
+
+> It's not necessary to build Infinispan image,  
+> since everything is configured in the `docker-compose.yml` file.
 
 > If you want to **import existing realms**, you can put the JSON files in the `config/keycloak/realms` directory.  
 > KeyCloak will import them automatically when the container starts.
