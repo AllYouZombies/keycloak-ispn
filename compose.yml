@@ -1,0 +1,178 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    entrypoint: >
+      sh -c "
+        echo \"CREATE USER infinispan WITH ENCRYPTED PASSWORD 'infinispan';\" > /docker-entrypoint-initdb.d/init.sql
+        echo \"CREATE USER keycloak WITH ENCRYPTED PASSWORD 'keycloak';\" >> /docker-entrypoint-initdb.d/init.sql
+        echo \"CREATE DATABASE infinispan OWNER infinispan;\" >> /docker-entrypoint-initdb.d/init.sql
+        echo \"CREATE DATABASE keycloak OWNER keycloak;\" >> /docker-entrypoint-initdb.d/init.sql
+        docker-entrypoint.sh postgres
+      "
+    environment:
+      TZ: ${TZ:-UTC}
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -U $$POSTGRES_USER"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    hostname: postgres
+    volumes:
+      - postgresql_data:/var/lib/postgresql/data
+
+  infinispan:
+    image: infinispan/server:15.0.7.Final
+    cpus: 1
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: >
+      sh -c "
+        echo 'user create ${ISPN_ADMIN:-admin} -p ${ISPN_ADMIN_PASSWORD:-admin} -g admin' > /opt/infinispan/identities-batch
+        echo 'user create monitor -p monitor --users-file metrics-users.properties --groups-file metrics-groups.properties' >> /opt/infinispan/identities-batch
+        /opt/infinispan/bin/launch.sh
+      "
+    environment:
+      TZ: ${TZ:-UTC}
+      IDENTITIES_BATCH: /opt/infinispan/identities-batch
+      JAVA_OPTIONS: -Xmx512m -Xms512m
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: infinispan
+      DB_USERNAME: infinispan
+      DB_PASSWORD: infinispan
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -fs http://localhost:11222/rest/v2/container/health/status | grep HEALTHY" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    scale: 3
+    volumes:
+      - ./config/infinispan/infinispan.xml:/opt/infinispan/server/conf/infinispan.xml
+      - ./infinispan-server-libs:/opt/infinispan/server/lib
+
+  keycloak:
+    image: keycloak:24.0.3
+    build:
+      context: .
+      dockerfile: keycloak.Dockerfile
+    command:
+      - --config-file=/opt/keycloak/conf/keycloak.conf
+      - start
+      - --optimized
+      - --import-realm
+      - --spi-connections-infinispan-quarkus-site-name=keycloak
+      - --hostname-strict=false
+    cpus: 2
+    depends_on:
+      postgres:
+        condition: service_healthy
+      infinispan:
+        condition: service_healthy
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_PROXY: edge
+      KC_HOSTNAME: ${KC_HOSTNAME:-localhost:8080}
+      KC_DB_URL_HOST: postgres
+      KC_DB_URL_PORT: 5432
+      KC_DB_URL_DATABASE: keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+      KC_DB_SCHEMA: public
+      KC_REMOTE_STORE_HOST: infinispan
+      KC_REMOTE_STORE_PORT: 11222
+      KC_REMOTE_STORE_USERNAME: ${ISPN_ADMIN:-admin}
+      KC_REMOTE_STORE_PASSWORD: ${ISPN_ADMIN_PASSWORD:-admin}
+    healthcheck:
+      test: [
+        "CMD-SHELL",
+        "curl -fs http://localhost:8080/health | jq 'if .status == \"UP\" and (all(.checks[].status; . == \"UP\")) then \"HEALTHY\" else \"UNHEALTHY\" end' | grep HEALTHY"
+      ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    mem_limit: 1g
+    scale: 3
+    volumes:
+      - ./config/keycloak/keycloak.conf:/opt/keycloak/conf/keycloak.conf
+      - ./config/keycloak/realms/:/opt/keycloak/data/import/
+
+  haproxy:
+    image: cr.smartbank.uz/dockerhub/haproxy:lts-alpine
+    command: >
+      sh -c '
+      echo "
+      global
+        quiet
+        maxconn 4096
+        log stdout format raw local0
+
+      defaults
+        log global
+        mode http
+        option forwardfor
+        timeout connect 5000ms
+        timeout client 50000ms
+        timeout server 50000ms
+        default-server init-addr last,libc,none
+      
+      resolvers docker
+        nameserver dns 127.0.0.11:53
+        resolve_retries 3
+        timeout resolve 1s
+        timeout retry   1s
+        hold other      10s
+        hold refused    10s
+        hold nx         10s
+        hold timeout    10s
+        hold valid      10s
+        hold obsolete   10s
+
+      frontend ispn_rest
+        mode tcp
+        bind *:11222
+        default_backend ispn_rest_back
+
+      backend ispn_rest_back
+        mode tcp
+        balance roundrobin
+        server-template infinispan- 3 infinispan:11222 check resolvers docker resolve-prefer ipv4
+      
+      frontend keycloak
+        mode tcp
+        bind *:8080
+        default_backend keycloak_back
+      
+      backend keycloak_back
+        mode tcp
+        balance roundrobin
+        server-template keycloak- 3 keycloak:8080 check resolvers docker resolve-prefer ipv4
+
+      listen stats
+        bind *:1936
+        stats enable
+        stats uri /
+        stats refresh 10s
+        stats show-legends
+        stats show-node
+      " > /usr/local/etc/haproxy/haproxy.cfg && haproxy -f /usr/local/etc/haproxy/haproxy.cfg
+      '
+    healthcheck:
+      test: [ "CMD-SHELL", "haproxy -c -f /usr/local/etc/haproxy/haproxy.cfg" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    ports:
+      - "127.0.0.1:1936:1936"
+      - "127.0.0.1:11222:11222"
+      - "127.0.0.1:8080:8080"
+    user: root
+
+volumes:
+  postgresql_data:

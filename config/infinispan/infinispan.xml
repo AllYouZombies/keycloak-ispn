@@ -1,0 +1,88 @@
+<infinispan
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:infinispan:config:15.0 https://infinispan.org/schemas/infinispan-config-15.0.xsd
+                            urn:infinispan:server:15.0 https://infinispan.org/schemas/infinispan-server-15.0.xsd"
+      xmlns="urn:infinispan:config:15.0"
+      xmlns:server="urn:infinispan:server:15.0">
+
+   <cache-container name="default" statistics="true">
+      <transport cluster="${infinispan.cluster.name:cluster}" stack="${infinispan.cluster.stack:tcp}" node-name="${infinispan.node.name:}"/>
+      <security>
+         <authorization/>
+      </security>
+       <distributed-cache-configuration name="distributed-cache-configuration" owners="2" mode="SYNC" statistics="true">
+          <encoding media-type="application/x-jboss-marshalling"/>
+          <memory storage="OFF_HEAP"/>
+          <persistence passivation="false">
+              <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:15.0" dialect="POSTGRES">
+                  <string-keyed-table prefix="ISPN_STRING_TABLE" create-on-start="true">
+                      <id-column name="ID_COLUMN" type="TEXT"/>
+                      <data-column name="DATA_COLUMN" type="BYTEA"/>
+                      <timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT"/>
+                      <segment-column name="SEGMENT_COLUMN" type="INT"/>
+                  </string-keyed-table>
+                  <connection-pool username="${env.DB_USERNAME}" password="${env.DB_PASSWORD}" driver="org.postgresql.Driver" connection-url="jdbc:postgresql://${env.DB_HOST}:${env.DB_PORT}/${env.DB_NAME}"/>
+              </string-keyed-jdbc-store>
+          </persistence>
+          <security>
+              <authorization enabled="true" roles="observer application admin monitor deployer"/>
+          </security>
+      </distributed-cache-configuration>
+      <replicated-cache-configuration name="replicated-cache-configuration" mode="SYNC" statistics="true">
+          <encoding media-type="application/x-jboss-marshalling"/>
+          <memory storage="OFF_HEAP"/>
+          <persistence passivation="false">
+              <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:15.0" dialect="POSTGRES">
+                  <string-keyed-table prefix="ISPN_STRING_TABLE" create-on-start="true">
+                      <id-column name="ID_COLUMN" type="TEXT"/>
+                      <data-column name="DATA_COLUMN" type="BYTEA"/>
+                      <timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT"/>
+                      <segment-column name="SEGMENT_COLUMN" type="INT"/>
+                  </string-keyed-table>
+                  <connection-pool username="${env.DB_USERNAME}" password="${env.DB_PASSWORD}" driver="org.postgresql.Driver" connection-url="jdbc:postgresql://${env.DB_HOST}:${env.DB_PORT}/${env.DB_NAME}"/>
+              </string-keyed-jdbc-store>
+          </persistence>
+          <security>
+              <authorization enabled="true" roles="observer application admin monitor deployer"/>
+          </security>
+      </replicated-cache-configuration>
+      <distributed-cache name="sessions" configuration="distributed-cache-configuration"/>
+      <distributed-cache name="authenticationSessions" configuration="distributed-cache-configuration"/>
+      <distributed-cache name="offlineSessions" configuration="distributed-cache-configuration"/>
+      <distributed-cache name="clientSessions" configuration="distributed-cache-configuration"/>
+      <distributed-cache name="offlineClientSessions" configuration="distributed-cache-configuration"/>
+      <distributed-cache name="loginFailures" configuration="distributed-cache-configuration"/>
+      <distributed-cache name="actionTokens" configuration="distributed-cache-configuration"/>
+      <replicated-cache name="work" configuration="replicated-cache-configuration"/>
+   </cache-container>
+
+   <server xmlns="urn:infinispan:server:15.0">
+      <interfaces>
+         <interface name="public">
+            <inet-address value="${infinispan.bind.address:127.0.0.1}"/>
+         </interface>
+      </interfaces>
+
+      <socket-bindings default-interface="public" port-offset="${infinispan.socket.binding.port-offset:0}">
+         <socket-binding name="default" port="${infinispan.bind.port:11222}"/>
+      </socket-bindings>
+
+      <security>
+         <security-realms>
+            <security-realm name="default">
+               <!-- Uncomment to enable TLS on the realm -->
+               <!-- server-identities>
+                  <ssl>
+                     <keystore path="server.pfx"
+                               password="password" alias="server"
+                               generate-self-signed-certificate-host="localhost"/>
+                  </ssl>
+               </server-identities-->
+               <properties-realm/>
+            </security-realm>
+         </security-realms>
+      </security>
+
+      <endpoints socket-binding="default" security-realm="default" />
+   </server>
+</infinispan>
