@@ -64,7 +64,7 @@ Output should be similar to this:
 
 ```bash
 NAME                       IMAGE                                          COMMAND                    SERVICE      CREATED          STATUS                    PORTS
-keycloak-ha-haproxy-1      haproxy:lts-alpine   "docker-entrypoint.s…"     haproxy      2 minutes ago    Up 2 minutes (healthy)    127.0.0.1:1936->1936/tcp, 127.0.0.1:8080->8080/tcp, 127.0.0.1:11222->11222/tcp
+keycloak-ha-haproxy-1      haproxy:lts-alpine                             "docker-entrypoint.s…"     haproxy      2 minutes ago    Up 2 minutes (healthy)    127.0.0.1:1936->1936/tcp, 127.0.0.1:8080->8080/tcp, 127.0.0.1:11222->11222/tcp
 keycloak-ha-infinispan-1   infinispan/server:15.0.7.Final                 "sh -c '\n  echo 'use…"    infinispan   2 minutes ago    Up 2 minutes (healthy)    2157/tcp, 7800/tcp, 7900/tcp, 8080/tcp, 8443/tcp, 11221-11223/tcp, 46655/tcp, 57600/tcp
 keycloak-ha-infinispan-2   infinispan/server:15.0.7.Final                 "sh -c '\n  echo 'use…"    infinispan   2 minutes ago    Up 2 minutes (healthy)    2157/tcp, 7800/tcp, 7900/tcp, 8080/tcp, 8443/tcp, 11221-11223/tcp, 46655/tcp, 57600/tcp
 keycloak-ha-infinispan-3   infinispan/server:15.0.7.Final                 "sh -c '\n  echo 'use…"    infinispan   2 minutes ago    Up 2 minutes (healthy)    2157/tcp, 7800/tcp, 7900/tcp, 8080/tcp, 8443/tcp, 11221-11223/tcp, 46655/tcp, 57600/tcp
