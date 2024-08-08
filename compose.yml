@@ -1,6 +1,7 @@
 services:
   postgres:
     image: postgres:16-alpine
+    cpus: 1
     entrypoint: >
       sh -c "
         echo \"CREATE USER infinispan WITH ENCRYPTED PASSWORD 'infinispan';\" > /docker-entrypoint-initdb.d/init.sql
@@ -20,11 +21,15 @@ services:
       timeout: 5s
       retries: 10
     hostname: postgres
+    mem_limit: 512m
     volumes:
       - postgresql_data:/var/lib/postgresql/data
 
   infinispan:
     image: infinispan/server:15.0.7.Final
+    build:
+      context: .
+      dockerfile: infinispan.Dockerfile
     cpus: 1
     depends_on:
       postgres:
@@ -50,6 +55,7 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
+    mem_limit: 768m
     scale: 3
     volumes:
       - ./config/infinispan/infinispan.xml:/opt/infinispan/server/conf/infinispan.xml
@@ -67,7 +73,7 @@ services:
       - --import-realm
       - --spi-connections-infinispan-quarkus-site-name=keycloak
       - --hostname-strict=false
-    cpus: 2
+    cpus: 1
     depends_on:
       postgres:
         condition: service_healthy
@@ -163,11 +169,13 @@ services:
         stats show-node
       " > /usr/local/etc/haproxy/haproxy.cfg && haproxy -f /usr/local/etc/haproxy/haproxy.cfg
       '
+    cpus: 1
     healthcheck:
       test: [ "CMD-SHELL", "haproxy -c -f /usr/local/etc/haproxy/haproxy.cfg" ]
       interval: 10s
       timeout: 10s
       retries: 10
+    mem_limit: 128m
     ports:
       - "1936:1936"
       - "11222:11222"
