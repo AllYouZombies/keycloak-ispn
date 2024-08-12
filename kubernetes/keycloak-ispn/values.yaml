@@ -1,0 +1,160 @@
+# Default values for keycloak-ispn.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+kc:
+  replicaCount: 3
+
+  image:
+    repository: oshpalov/kc-ha-keycloak
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "24.0.3"
+
+  podEnv:
+    - name: KEYCLOAK_ADMIN
+      value: "admin"
+    - name: KEYCLOAK_ADMIN_PASSWORD
+      value: "admin"
+    #- name: KC_HOSTNAME
+    #  value: "keycloak.example.com:8080"
+    #- name: KC_DB_URL_HOST
+    #  value: "1.2.3.4"
+    #- name: KC_DB_URL_PORT
+    #  value: "5432"
+    #- name: KC_DB_URL_DATABASE
+    #  value: "keycloak"
+    #- name: KC_DB_USERNAME
+    #  value: "keycloak"
+    #- name: KC_DB_PASSWORD
+    #  value: "keycloak"
+    #- name: KC_DB_SCHEMA
+    #  value: "public"
+    #- name: KC_REMOTE_STORE_USERNAME
+    #  value: "admin"
+    #- name: KC_REMOTE_STORE_PASSWORD
+    #  value: "admin"
+
+  service:
+    type: ClusterIP # Can be "ClusterIP", "NodePort", or "LoadBalancer"
+    port: 8080
+    containerPort: 8080
+    nodePort: 30080 # Only used if type is NodePort
+
+  ingress:
+    enabled: false
+    className: ""
+    annotations: { }
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+    hosts:
+      - host: chart-example.local
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+    tls: [ ]
+    #  - secretName: chart-example-tls
+    #    hosts:
+    #      - chart-example.local
+
+  autoscaling:
+    enabled: false
+    minReplicas: 3
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+
+  resources:
+    limits:
+      cpu: "2"
+      memory: 1536Mi
+    requests:
+      cpu: "1"
+      memory: 768Mi
+
+  nodeSelector: { }
+
+  tolerations: [ ]
+
+  affinity: { }
+
+ispn:
+  replicaCount: 3
+
+  image:
+    repository: oshpalov/kc-ha-infinispan
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "15.0.7.Final"
+
+  podEnv:
+    - name: ISPN_ADMIN
+      value: "admin"
+    - name: ISPN_ADMIN_PASSWORD
+      value: "admin"
+    #- name: DB_HOST
+    #  value: "1.2.3.4"
+    #- name: DB_PORT
+    #  value: "5432"
+    #- name: DB_NAME
+    #  value: "infinispan"
+    #- name: DB_USERNAME
+    #  value: "infinispan"
+    #- name: DB_PASSWORD
+    #  value: "infinispan"
+
+  storage:
+    size: 1Gi
+
+  service:
+    type: ClusterIP # Can be "ClusterIP", "NodePort", or "LoadBalancer"
+    port: 11222
+    containerPort: 11222
+    nodePort: 30081 # Only used if type is NodePort
+
+  autoscaling:
+    enabled: false
+    minReplicas: 3
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+
+  resources:
+    limits:
+      cpu: "2"
+      memory: 1Gi
+    requests:
+      cpu: "1"
+      memory: 512Mi
+
+  nodeSelector: { }
+
+  tolerations: [ ]
+
+  affinity: { }
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000

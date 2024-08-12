@@ -1,0 +1,57 @@
+{{- if .Values.kc.autoscaling.enabled }}
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "keycloak-ispn.fullname" . }}-keycloak
+  labels:
+    {{- include "keycloak-ispn.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "keycloak-ispn.fullname" . }}-keycloak
+  minReplicas: {{ .Values.kc.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.kc.autoscaling.maxReplicas }}
+  metrics:
+    {{- if .Values.kc.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        targetAverageUtilization: {{ .Values.kc.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.kc.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        targetAverageUtilization: {{ .Values.kc.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+{{- end }}
+---
+{{- if .Values.ispn.autoscaling.enabled }}
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "keycloak-ispn.fullname" . }}-ispn
+  labels:
+    {{- include "keycloak-ispn.ispn-labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: {{ include "keycloak-ispn.fullname" . }}-ispn
+  minReplicas: {{ .Values.ispn.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.ispn.autoscaling.maxReplicas }}
+  metrics:
+    {{- if .Values.ispn.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        targetAverageUtilization: {{ .Values.ispn.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.ispn.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        targetAverageUtilization: {{ .Values.ispn.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+{{- end }}

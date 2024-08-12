@@ -11,13 +11,94 @@ There are 3 ways to deploy this cluster:
 
 ## Table of Contents
 
-- [KeyCloak HA Cluster with Infinispan](#keycloak-ha-cluster-with-infinispan)
-  - [Table of Contents](#table-of-contents)
-  - [Docker Compose](#docker-compose)
-    - [Prerequisites](#prerequisites)
-    - [Running clusters](#running-clusters)
-    - [Stopping clusters](#stopping-clusters)
-  - [Docker Swarm](#docker-swarm)
+- [Table of Contents](#table-of-contents)
+- [Docker Compose](#docker-compose)
+  - [Prerequisites](#prerequisites)
+  - [Running clusters](#running-clusters)
+  - [Stopping clusters](#stopping-clusters)
+- [Kubernetes](#kubernetes)
+  - [Helm chart](#helm-chart)
+  - [Accessing services](#accessing-services)
+  - [Importing realms](#importing-realms)
+
+---
+
+## Building images & Helm chart
+
+### KeyCloak
+
+Review the files under the `config/keycloak` directory, as well as the `keycloak.Dockerfile` file.
+The attached files include the following configurations:
+
+- `keycloak.conf`:
+  allow to access the KeyCloak by any host without SSL
+- `cache-ispn-remote.xml`:
+  Infinispan cache provider configuration
+- `realms`:
+  Directory for importing realms
+- `keycloak.Dockerfile`:
+  - Install `curl` package for Docker health checks
+  - Include the configuration files in the image
+  - Enable health checks and metrics
+  - Build KeyCloak app for production use ([more info](https://www.keycloak.org/server/containers))
+
+Build the KeyCloak image:
+
+```bash
+IMAGE=oshpalov/keycloak-ispn:24.0.3 # Change the image name and tag as needed
+docker build -f keycloak.Dockerfile -t $IMAGE .
+```
+
+Push the image to the registry:
+
+```bash
+docker push $IMAGE
+```
+
+### Infinispan
+
+Review the files under the `config/infinispan` directory, as well as the `infinispan.Dockerfile` file.
+The attached files include the following configurations:
+
+- `infinispan.xml`:
+  Infinispan configuration with the necessary cache stores
+- `infinispan.Dockerfile`:
+  - Include the configuration file in the image
+  - Include additional libs for Infinispan, such as `postgresql`
+  - Make a volume for the data directory
+
+Build the Infinispan image:
+
+```bash
+IMAGE=oshpalov/infinispan-ispn:15.0.7.Final # Change the image name and tag as needed
+docker build -f infinispan.Dockerfile -t $IMAGE .
+```
+
+Push the image to the registry:
+
+```bash
+docker push $IMAGE
+```
+
+### Helm chart
+
+Review the files under the `kubernetes` directory, as well as the `values.yaml` file.
+
+At this point, you can place the KeyCloak realms in the `realms` directory.
+
+Build the Helm chart:
+
+```bash
+helm package keycloak-ispn
+```
+
+Push the chart to the OCI registry:
+
+```bash
+VERSION=$(grep version keycloak-ispn/Chart.yaml | awk '{print $2}')
+CHART_URL=oci://registry-1.docker.io/oshpalov/keycloak-ispn # Change the registry URL as needed
+helm push keycloak-ispn-$VERSION.tgz $CHART_URL
+```
 
 ---
 
@@ -36,31 +117,31 @@ There are 3 reasons for this:
 1. Default KeyCloak image is not meant to be used in production.  
    [Check the official documentation](https://www.keycloak.org/server/containers) for more information.
 2. Since we are using Infinispan as a cache provider,  
-   we need to pass the `cache-ispn-remote.xml` file to the `build` command.  
-   This file is used to configure the Infinispan cache provider.
+   we need to pass the `cache-ispn-remote.xml` file to the `build` command.
 3. To perform **health checks** on the KeyCloak instances,  
    we need to install the `curl` package in the image.
 
-> It's not necessary to build Infinispan image,  
-> since everything is configured in the `docker-compose.yml` file.
-
-> If you want to **import existing realms**, you can put the JSON files in the `config/keycloak/realms` directory.  
-> KeyCloak will import them automatically when the container starts.
+> **NOTE:** It's not necessary to build Infinispan image,  
+> since everything is configured in the `compose.yml` file.
 
 ### Running clusters
 
 Copy the `.example.env` file to `.env` and change the values as needed.  
-Then, run the following command:
+
+> **NOTE:** If you want to **import existing realms**, you can put the JSON files in the `config/keycloak/realms` directory.  
+> KeyCloak will import them automatically when the container starts.
+
+Run the following command to start the clusters:
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 Wait for the containers to start.
 You can check the status of the containers by running:
 
 ```bash
-docker-compose ps
+docker compose ps
 ```
 
 Output should be similar to this:
@@ -90,15 +171,49 @@ Use the credentials defined in the `.env` file to access services.
 To stop the clusters, run the following command:
 
 ```bash
-docker-compose down
+docker compose down
 ```
 
 If you want to remove the volumes as well, run:
 
 ```bash
-docker-compose down -v
+docker compose down -v
 ```
 
 ---
 
-## Docker Swarm
+## Kubernetes
+
+### Helm chart
+
+There is a Helm chart available in the `kubernetes` directory.  
+To install the chart using CLI, update the `values.yaml` file with the necessary values in the `kc.env` and `ispn.env` sections.
+
+Then run the following command:
+
+```bash
+helm install keycloak-ispn \
+     --create-namespace \
+     --namespace keycloak-ispn \
+     --values values.yaml \
+     oci://registry-1.docker.io/oshpalov/keycloak-ispn:1.0.0
+```
+
+### Accessing services
+
+By default, the services aren't exposed to the outside world.
+You can update the `values.yaml` file to expose the services using `NodePort` or `LoadBalancer`.
+
+Also, you can enable `Ingress` by setting the `kc.ingress.enabled` and `ispn.ingress.enabled` values to `true`.
+
+### Importing realms
+
+There are 3 ways to import realms, depending on the environment:
+
+1. **Using Helm chart and CLI**
+   If you're deploying the chart using CLI, you can put the JSON files in the `realms` directory.
+   Realms will be included in the chart and imported automatically.
+2. **Using Helm chart with GitOps**
+   If you're deploying the chart using GitOps, you can still put the JSON files in the `realms` directory.
+3. **Using KeyCloak Admin Console**
+   If you're deploying packaged Helm chart, you can import realms manually using the KeyCloak Admin Console.

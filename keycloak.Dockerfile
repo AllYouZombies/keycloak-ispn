@@ -11,6 +11,6 @@ ENV KC_HEALTH_ENABLED=true KC_METRICS_ENABLED=true KC_DB=postgres
 
 COPY --from=ubi-micro-build /mnt/rootfs /
 
-COPY --chown=keycloak:keycloak config/keycloak/cache-ispn-remote.xml /opt/keycloak/conf/
+COPY --chown=keycloak:keycloak config/keycloak/* /opt/keycloak/conf/
 
 RUN /opt/keycloak/bin/kc.sh build --features=scripts,multi-site --cache-config-file=cache-ispn-remote.xml

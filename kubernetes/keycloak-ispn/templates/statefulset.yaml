@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "keycloak-ispn.fullname" . }}-ispn
+  labels:
+    {{- include "keycloak-ispn.ispn-labels" . | nindent 4 }}
+spec:
+  serviceName: "{{ include "keycloak-ispn.fullname" . }}-ispn-headless"
+  replicas: {{ .Values.ispn.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "keycloak-ispn.ispn.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "keycloak-ispn.ispn.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "keycloak-ispn.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}-ispn
+          image: "{{ .Values.ispn.image.repository }}:{{ .Values.ispn.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.ispn.image.pullPolicy }}
+          command: [ "sh", "-c" ]
+          args:
+            - |
+              echo "user create ${ISPN_ADMIN} -p ${ISPN_ADMIN_PASSWORD} -g admin" > /opt/infinispan/identities-batch
+              echo "user create monitor -p monitor --users-file metrics-users.properties --groups-file metrics-groups.properties" >> /opt/infinispan/identities-batch
+              /opt/infinispan/bin/launch.sh -Dinfinispan.cluster.stack=kubernetes -Djgroups.dns.query="{{ printf "%s-ispn-ping.%s" (include "keycloak-ispn.fullname" .) .Release.Namespace }}"
+          ports:
+            - name: hotrod
+              containerPort: 11222
+              protocol: TCP
+          env:
+            - name: IDENTITIES_BATCH
+              value: "/opt/infinispan/identities-batch"
+            {{- toYaml .Values.ispn.podEnv | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /rest/v2/container/health/status
+              port: hotrod
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /rest/v2/container/health/status
+              port: hotrod
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5
+          volumeMounts:
+            - name: data
+              mountPath: /opt/infinispan/data
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          resources:
+            {{- toYaml .Values.ispn.resources | nindent 12 }}
+      {{- with .Values.ispn.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.ispn.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.ispn.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  volumeClaimTemplates:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: data
+        labels:
+          {{- include "keycloak-ispn.ispn-labels" . | nindent 8 }}
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: {{ .Values.ispn.storage.size }}

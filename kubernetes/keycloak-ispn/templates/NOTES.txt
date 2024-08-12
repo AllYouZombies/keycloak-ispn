@@ -1,0 +1,29 @@
+1. To access the application, follow these steps:
+
+{{- if .Values.kc.ingress.enabled }}
+   Access the application using the Ingress URL(s):
+   {{- range $host := .Values.kc.ingress.hosts }}
+   http{{ if $.Values.kc.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+   {{- end }}
+{{- else if contains "NodePort" .Values.kc.service.type }}
+   The application is exposed on a NodePort. Use the following commands to get the URL:
+   export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "keycloak-ispn.fullname" . }}-keycloak)
+   export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+   echo "Visit http://$NODE_IP:$NODE_PORT to access your application."
+{{- else if contains "LoadBalancer" .Values.kc.service.type }}
+   The application is exposed via a LoadBalancer. It may take a few minutes for the LoadBalancer IP to be available.
+   Use the following commands to get the URL:
+   export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "keycloak-ispn.fullname" . }}-keycloak --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+   echo "Visit http://$SERVICE_IP:{{ .Values.kc.service.port }} to access your application."
+{{- else if contains "ClusterIP" .Values.kc.service.type }}
+   The application is exposed internally in the cluster via ClusterIP. To access it locally, use port forwarding:
+   export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "keycloak-ispn.name" . }}-keycloak,app.kubernetes.io/instance={{ .Release.Name }}" -o jsonpath="{.items[0].metadata.name}")
+   export CONTAINER_PORT=$(kubectl get pod --namespace {{ .Release.Namespace }} $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
+   echo "Visit http://127.0.0.1:8080 to access your application."
+   kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 8080:$CONTAINER_PORT
+{{- end }}
+
+2. **Run Post-install Tests**:
+To run tests, execute:
+```shell
+kubectl run --namespace {{ .Release.Namespace }} --rm {{ include "keycloak-ispn.fullname" . }}-test --image busybox --command -- wget -qO- {{ include "keycloak-ispn.fullname" . }}:{{ .Values.kc.service.port }}

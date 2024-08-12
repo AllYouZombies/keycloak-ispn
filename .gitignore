@@ -3,3 +3,5 @@
 .env
 
 config/keycloak/realms/
+
+kubernetes/*.tgz
