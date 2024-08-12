@@ -11,19 +11,25 @@ There are 3 ways to deploy this cluster:
 
 ## Table of Contents
 
-- [Table of Contents](#table-of-contents)
+- [Building images & Helm chart](#building-images--helm-chart)
+  - [KeyCloak](#keycloak)
+  - [Infinispan](#infinispan)
+  - [Helm chart](#helm-chart)
 - [Docker Compose](#docker-compose)
   - [Prerequisites](#prerequisites)
   - [Running clusters](#running-clusters)
   - [Stopping clusters](#stopping-clusters)
 - [Kubernetes](#kubernetes)
-  - [Helm chart](#helm-chart)
+  - [Helm chart](#helm-chart-1)
   - [Accessing services](#accessing-services)
   - [Importing realms](#importing-realms)
 
 ---
 
 ## Building images & Helm chart
+
+Since all the images and Helm chart are already built and available in the OCI registry, you can skip this step.  
+Or you can build them yourself by following the instructions below.
 
 ### KeyCloak
 
