@@ -3,9 +3,9 @@
 This repository contains the necessary files to deploy a KeyCloak HA Cluster with Infinispan as a cache provider.  
 There are 3 ways to deploy this cluster:
 
-- Using Docker Compose
-- Using Docker Swarm
-- Using Kubernetes
+- **Using Docker Compose**
+- **Using Docker Swarm**
+- **Using Kubernetes**
 
 ---
 
@@ -216,10 +216,10 @@ Also, you can enable `Ingress` by setting the `kc.ingress.enabled` and `ispn.ing
 
 There are 3 ways to import realms, depending on the environment:
 
-1. **Using Helm chart and CLI**
+1. **Using Helm chart and CLI**  
    If you're deploying the chart using CLI, you can put the JSON files in the `realms` directory.
    Realms will be included in the chart and imported automatically.
-2. **Using Helm chart with GitOps**
+2. **Using Helm chart with GitOps**  
    If you're deploying the chart using GitOps, you can still put the JSON files in the `realms` directory.
-3. **Using KeyCloak Admin Console**
+3. **Using KeyCloak Admin Console**  
    If you're deploying packaged Helm chart, you can import realms manually using the KeyCloak Admin Console.
