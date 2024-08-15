@@ -38,7 +38,7 @@ services:
       sh -c "
         echo 'user create ${ISPN_ADMIN:-admin} -p ${ISPN_ADMIN_PASSWORD:-admin} -g admin' > /opt/infinispan/identities-batch
         echo 'user create monitor -p monitor --users-file metrics-users.properties --groups-file metrics-groups.properties' >> /opt/infinispan/identities-batch
-        /opt/infinispan/bin/launch.sh
+        /opt/infinispan/bin/launch.sh -Dinfinispan.deserialization.allowlist.classes=java.time.Instant,org.keycloak.cluster.infinispan.WrapperClusterEvent -Dinfinispan.deserialization.allowlist.regexps=.*
       "
     environment:
       TZ: ${TZ:-UTC}
