@@ -29,6 +29,15 @@ spec:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ .Chart.Name }}-keycloak
+          command:
+            - /bin/sh
+            - -c
+            - |
+              if [[ -f /vault/secrets/env ]]; then
+                echo "$(date) - Loading environment secrets from Vault"
+                source /vault/secrets/env
+              fi
+              /opt/keycloak/bin/kc.sh $@
           args:
             - --config-file=/opt/keycloak/conf/keycloak.conf
             - start

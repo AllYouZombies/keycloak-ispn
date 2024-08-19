@@ -33,6 +33,10 @@ spec:
           command: [ "sh", "-c" ]
           args:
             - |
+              if [[ -f /vault/secrets/env ]]; then
+                echo "$(date) - Loading environment secrets from Vault"
+                source /vault/secrets/env
+              fi
               echo "user create ${ISPN_ADMIN} -p ${ISPN_ADMIN_PASSWORD} -g admin" > /opt/infinispan/identities-batch
               echo "user create monitor -p monitor --users-file metrics-users.properties --groups-file metrics-groups.properties" >> /opt/infinispan/identities-batch
               /opt/infinispan/bin/launch.sh -Dinfinispan.cluster.stack=kubernetes -Djgroups.dns.query="{{ printf "%s-ispn-ping.%s" (include "keycloak-ispn.fullname" .) .Release.Namespace }}" -Dinfinispan.deserialization.allowlist.classes=java.time.Instant,org.keycloak.cluster.infinispan.WrapperClusterEvent -Dinfinispan.deserialization.allowlist.regexps=.*

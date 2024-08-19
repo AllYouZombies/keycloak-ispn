@@ -106,6 +106,30 @@ CHART_URL=oci://registry-1.docker.io/oshpalov/keycloak-ispn # Change the registr
 helm push keycloak-ispn-$VERSION.tgz $CHART_URL
 ```
 
+#### Using with HashiCorp Vault
+
+You can pass environment variables to the KeyCloak and Infinispan containers using HashiCorp Vault.  
+
+Example of the `values.yaml` file:
+
+```yaml
+...
+podAnnotations:
+  vault.hashicorp.com/agent-inject: "true"
+  vault.hashicorp.com/role: "default"
+  vault.hashicorp.com/agent-inject-secret-env: "kv/data/keycloak"
+  vault.hashicorp.com/agent-inject-template-env: |
+    {{- with secret "kv/data/keycloak" -}}
+    {{- range $key, $value := .Data.data -}}
+    export {{ $key }}="{{ $value }}"
+    {{- end -}}
+    {{- end -}}
+...
+```
+
+Data from the `kv/data/keycloak` path in the Vault will be injected into `/vaut/secrets/env` in the container.  
+When the container starts, the data will be exported as environment variables.
+
 ---
 
 ## Docker Compose
