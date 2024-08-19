@@ -21,6 +21,7 @@ There are 3 ways to deploy this cluster:
   - [Stopping clusters](#stopping-clusters)
 - [Kubernetes](#kubernetes)
   - [Helm chart](#helm-chart-1)
+    - [Using with HashiCorp Vault](#using-with-hashicorp-vault)
   - [Accessing services](#accessing-services)
   - [Importing realms](#importing-realms)
 
