@@ -35,8 +35,7 @@ Common labels
 */}}
 {{- define "keycloak-ispn.labels" -}}
 helm.sh/chart: {{ include "keycloak-ispn.chart" . }}
-{{ include "keycloak-ispn.kc.selectorLabels" . }}
-{{ include "keycloak-ispn.ispn.selectorLabels" . }}
+{{ include "keycloak-ispn.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -44,25 +43,11 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
 {{/*
-Common labels for ISPN
-*/}}
-{{- define "keycloak-ispn.ispn-labels" -}}
-helm.sh/chart: {{ include "keycloak-ispn.chart" . }}
-{{ include "keycloak-ispn.kc.selectorLabels" . }}
-{{ include "keycloak-ispn.ispn.selectorLabels" . }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- end }}
-
-{{/*
 Selector labels
 */}}
-{{- define "keycloak-ispn.kc.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "keycloak-ispn.name" . }}-keycloak
-app.kubernetes.io/instance: {{ .Release.Name }}-keycloak
-{{- end }}
-{{- define "keycloak-ispn.ispn.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "keycloak-ispn.name" . }}-ispn
-app.kubernetes.io/instance: {{ .Release.Name }}-ispn
+{{- define "keycloak-ispn.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "keycloak-ispn.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*

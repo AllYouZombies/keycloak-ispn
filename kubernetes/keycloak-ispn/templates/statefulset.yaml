@@ -3,13 +3,14 @@ kind: StatefulSet
 metadata:
   name: {{ include "keycloak-ispn.fullname" . }}-ispn
   labels:
-    {{- include "keycloak-ispn.ispn-labels" . | nindent 4 }}
+    {{- include "keycloak-ispn.labels" . | nindent 4 }}
 spec:
   serviceName: "{{ include "keycloak-ispn.fullname" . }}-ispn-headless"
   replicas: {{ .Values.ispn.replicaCount }}
   selector:
     matchLabels:
-      {{- include "keycloak-ispn.ispn.selectorLabels" . | nindent 6 }}
+      {{- include "keycloak-ispn.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: infinispan
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -17,7 +18,8 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "keycloak-ispn.ispn.selectorLabels" . | nindent 8 }}
+        {{- include "keycloak-ispn.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: infinispan
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -27,7 +29,7 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
-        - name: {{ .Chart.Name }}-ispn
+        - name: infinispan
           image: "{{ .Values.ispn.image.repository }}:{{ .Values.ispn.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.ispn.image.pullPolicy }}
           command: [ "sh", "-c" ]
@@ -89,7 +91,7 @@ spec:
       metadata:
         name: data
         labels:
-          {{- include "keycloak-ispn.ispn-labels" . | nindent 8 }}
+          {{- include "keycloak-ispn.labels" . | nindent 8 }}
       spec:
         accessModes: [ "ReadWriteOnce" ]
         resources:

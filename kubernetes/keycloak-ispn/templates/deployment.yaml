@@ -10,7 +10,8 @@ spec:
   {{- end }}
   selector:
     matchLabels:
-      {{- include "keycloak-ispn.kc.selectorLabels" . | nindent 6 }}
+      {{- include "keycloak-ispn.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: keycloak
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -18,7 +19,8 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "keycloak-ispn.kc.selectorLabels" . | nindent 8 }}
+        {{- include "keycloak-ispn.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: keycloak
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -28,7 +30,7 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
-        - name: {{ .Chart.Name }}-keycloak
+        - name: keycloak
           command:
             - /bin/sh
             - -c

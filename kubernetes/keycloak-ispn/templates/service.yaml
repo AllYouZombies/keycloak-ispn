@@ -15,14 +15,15 @@ spec:
       nodePort: {{ .Values.kc.service.nodePort | default 30080 }}
       {{- end }}
   selector:
-    {{- include "keycloak-ispn.kc.selectorLabels" . | nindent 4 }}
+    {{- include "keycloak-ispn.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: keycloak
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ include "keycloak-ispn.fullname" . }}-ispn
   labels:
-    {{- include "keycloak-ispn.ispn-labels" . | nindent 4 }}
+    {{- include "keycloak-ispn.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.ispn.service.type | default "ClusterIP" }}
   ports:
@@ -34,14 +35,15 @@ spec:
       nodePort: {{ .Values.ispn.service.nodePort | default 30081 }}
       {{- end }}
   selector:
-    {{- include "keycloak-ispn.ispn.selectorLabels" . | nindent 4 }}
+    {{- include "keycloak-ispn.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: infinispan
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ include "keycloak-ispn.fullname" . }}-ispn-headless
   labels:
-    {{- include "keycloak-ispn.ispn-labels" . | nindent 4 }}
+    {{- include "keycloak-ispn.labels" . | nindent 4 }}
 spec:
   clusterIP: None
   ports:
@@ -50,14 +52,15 @@ spec:
       protocol: TCP
       name: hotrod
   selector:
-    {{- include "keycloak-ispn.ispn.selectorLabels" . | nindent 4 }}
+    {{- include "keycloak-ispn.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: infinispan
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ include "keycloak-ispn.fullname" . }}-ispn-ping
   labels:
-    {{- include "keycloak-ispn.ispn-labels" . | nindent 4 }}
+    {{- include "keycloak-ispn.labels" . | nindent 4 }}
 spec:
   clusterIP: None
   ports:
@@ -66,4 +69,5 @@ spec:
       protocol: TCP
       name: ping
   selector:
-    {{- include "keycloak-ispn.ispn.selectorLabels" . | nindent 4 }}
+    {{- include "keycloak-ispn.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: infinispan
