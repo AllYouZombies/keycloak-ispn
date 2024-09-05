@@ -213,6 +213,52 @@ docker compose down -v
 
 ---
 
+## Docker Swarm
+
+### Requirements
+
+- Docker Swarm cluster with at least 3 nodes
+- PostgreSQL server
+- [Portainer](https://docs.portainer.io/start/install-ce/server/swarm/linux) (optional)
+
+> Since Docker Swarm doesn't support stateful services by default,
+> Postgres server is not included in the stack.  
+> You can use the existing PostgreSQL server or deploy a new one.
+
+> Portainer is required to easily deploy the stack with dynamic environment variables.  
+> You can use the `docker stack deploy` command as well, but you have to pass the environment variables manually.
+
+### Prepare DB
+
+Create a new database and user for Infinispan:
+
+```sql
+CREATE DATABASE infinispan;
+CREATE USER infinispan WITH ENCRYPTED PASSWORD 'password';
+GRANT ALL PRIVILEGES ON DATABASE infinispan TO infinispan;
+```
+
+Create a new database and user for KeyCloak:
+
+```sql
+CREATE DATABASE keycloak;
+CREATE USER keycloak WITH ENCRYPTED PASSWORD 'password';
+GRANT ALL PRIVILEGES ON DATABASE keycloak TO keycloak;
+```
+
+### Deploy stack
+
+Assuming you have Portainer installed, follow these steps:
+
+1. Create a new stack in Portainer
+2. Paste the content of the `docker-swarm/keycloak-ispn-stack.yml` file
+3. Update the environment variables as shown in the `.example.stack.env` file
+4. Deploy the stack
+
+> **NOTE:** You can also use gitops to deploy the stack.
+
+---
+
 ## Kubernetes
 
 ### Helm chart

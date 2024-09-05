@@ -1,0 +1,176 @@
+services:
+  infinispan:
+    image: infinispan/server:15.0.7.Final
+    deploy:
+      replicas: 3
+      update_config:
+          order: stop-first
+          failure_action: rollback
+          monitor: 10s
+      rollback_config:
+          parallelism: 2
+          delay: 3s
+          failure_action: continue
+      restart_policy:
+          condition: on-failure
+          delay: 0s
+          max_attempts: 0
+      resources:
+        limits:
+          cpus: 1
+          memory: 768m
+        reservations:
+          cpus: 0.5
+          memory: 512m
+    entrypoint: >
+      sh -c "
+        echo 'user create ${ISPN_ADMIN:-admin} -p ${ISPN_ADMIN_PASSWORD:-admin} -g admin' > /opt/infinispan/identities-batch
+        echo 'user create monitor -p monitor --users-file metrics-users.properties --groups-file metrics-groups.properties' >> /opt/infinispan/identities-batch
+        /opt/infinispan/bin/launch.sh -Dinfinispan.deserialization.allowlist.classes=java.time.Instant,org.keycloak.cluster.infinispan.WrapperClusterEvent -Dinfinispan.deserialization.allowlist.regexps=.*
+      "
+    environment:
+      TZ: ${TZ:-UTC}
+      IDENTITIES_BATCH: /opt/infinispan/identities-batch
+      JAVA_OPTIONS: -Xmx512m -Xms512m
+      DB_HOST: ${ISPN_DB_HOST}
+      DB_PORT: ${ISPN_DB_PORT}
+      DB_NAME: ${ISPN_DB_NAME}
+      DB_USERNAME: ${ISPN_DB_USERNAME}
+      DB_PASSWORD: ${ISPN_DB_PASSWORD}
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -fs http://localhost:11222/rest/v2/container/health/status | grep HEALTHY" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  keycloak:
+    image: keycloak:24.0.3
+    command:
+      - --config-file=/opt/keycloak/conf/keycloak.conf
+      - start
+      - --optimized
+      - --import-realm
+      - --spi-connections-infinispan-quarkus-site-name=keycloak
+      - --hostname-strict=false
+    deploy:
+      replicas: 3
+      update_config:
+        order: stop-first
+        failure_action: rollback
+        monitor: 10s
+      rollback_config:
+        parallelism: 2
+        delay: 3s
+        failure_action: continue
+      restart_policy:
+        condition: on-failure
+        delay: 0s
+        max_attempts: 0
+      resources:
+        limits:
+          cpus: 1
+          memory: 1g
+        reservations:
+          cpus: 0.5
+          memory: 512m
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_PROXY: edge
+      KC_HOSTNAME: ${KC_HOSTNAME:-localhost:8080}
+      KC_DB_URL_HOST: ${KC_DB_URL_HOST}
+      KC_DB_URL_PORT: ${KC_DB_URL_PORT}
+      KC_DB_URL_DATABASE: ${KC_DB_URL_DATABASE}
+      KC_DB_USERNAME: ${KC_DB_USERNAME}
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
+      KC_DB_SCHEMA: ${KC_DB_SCHEMA}
+      KC_REMOTE_STORE_HOST: infinispan
+      KC_REMOTE_STORE_PORT: 11222
+      KC_REMOTE_STORE_USERNAME: ${ISPN_ADMIN:-admin}
+      KC_REMOTE_STORE_PASSWORD: ${ISPN_ADMIN_PASSWORD:-admin}
+    healthcheck:
+      test: [
+        "CMD-SHELL",
+        "curl -fs http://localhost:8080/health | jq 'if .status == \"UP\" and (all(.checks[].status; . == \"UP\")) then \"HEALTHY\" else \"UNHEALTHY\" end' | grep HEALTHY"
+      ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  haproxy:
+    image: haproxy:lts-alpine
+    command: >
+      sh -c '
+      echo "
+      global
+        quiet
+        maxconn 4096
+        log stdout format raw local0
+
+      defaults
+        log global
+        mode http
+        option forwardfor
+        timeout connect 5000ms
+        timeout client 50000ms
+        timeout server 50000ms
+        default-server init-addr last,libc,none
+      
+      resolvers docker
+        nameserver dns 127.0.0.11:53
+        resolve_retries 3
+        timeout resolve 1s
+        timeout retry   1s
+        hold other      10s
+        hold refused    10s
+        hold nx         10s
+        hold timeout    10s
+        hold valid      10s
+        hold obsolete   10s
+
+      frontend ispn_rest
+        mode tcp
+        bind *:11222
+        default_backend ispn_rest_back
+
+      backend ispn_rest_back
+        mode tcp
+        balance roundrobin
+        server-template infinispan- 3 infinispan:11222 check resolvers docker resolve-prefer ipv4
+      
+      frontend keycloak
+        mode tcp
+        bind *:8080
+        default_backend keycloak_back
+      
+      backend keycloak_back
+        mode tcp
+        balance roundrobin
+        server-template keycloak- 3 keycloak:8080 check resolvers docker resolve-prefer ipv4
+
+      listen stats
+        bind *:1936
+        stats enable
+        stats uri /
+        stats refresh 10s
+        stats show-legends
+        stats show-node
+      " > /usr/local/etc/haproxy/haproxy.cfg && haproxy -f /usr/local/etc/haproxy/haproxy.cfg
+      '
+    cpus: 1
+    healthcheck:
+      test: [ "CMD-SHELL", "haproxy -c -f /usr/local/etc/haproxy/haproxy.cfg" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    mem_limit: 128m
+    ports:
+      - "1936:1936"
+      - "11222:11222"
+      - "8080:8080"
+    user: root
+
+volumes:
+  postgresql_data:
