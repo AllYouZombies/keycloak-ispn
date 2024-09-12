@@ -11,8 +11,8 @@ spec:
       targetPort: {{ .Values.kc.service.containerPort | default 8080 }}
       protocol: TCP
       name: http
-      {{- if eq .Values.kc.service.type "NodePort" }}
-      nodePort: {{ .Values.kc.service.nodePort | default 30080 }}
+      {{- if and (eq .Values.kc.service.type "NodePort") .Values.kc.service.nodePort }}
+      nodePort: {{ .Values.kc.service.nodePort }}
       {{- end }}
   selector:
     {{- include "keycloak-ispn.selectorLabels" . | nindent 4 }}
@@ -31,8 +31,8 @@ spec:
       targetPort: {{ .Values.ispn.service.containerPort | default 11222 }}
       protocol: TCP
       name: hotrod
-      {{- if eq .Values.ispn.service.type "NodePort" }}
-      nodePort: {{ .Values.ispn.service.nodePort | default 30081 }}
+      {{- if and (eq .Values.ispn.service.type "NodePort") .Values.ispn.service.nodePort }}
+      nodePort: {{ .Values.ispn.service.nodePort }}
       {{- end }}
   selector:
     {{- include "keycloak-ispn.selectorLabels" . | nindent 4 }}

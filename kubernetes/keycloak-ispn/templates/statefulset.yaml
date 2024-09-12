@@ -54,7 +54,7 @@ spec:
             httpGet:
               path: /rest/v2/container/health/status
               port: hotrod
-            initialDelaySeconds: 30
+            initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 5
@@ -62,7 +62,7 @@ spec:
             httpGet:
               path: /rest/v2/container/health/status
               port: hotrod
-            initialDelaySeconds: 30
+            initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 5
