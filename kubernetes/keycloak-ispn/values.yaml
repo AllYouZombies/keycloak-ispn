@@ -127,6 +127,10 @@ ispn:
       cpu: "1"
       memory: 512Mi
 
+  identitiesBatch: ""
+  #identitiesBatch: |
+  #  user create observer -p observer -g observer
+
   nodeSelector: { }
 
   tolerations: [ ]

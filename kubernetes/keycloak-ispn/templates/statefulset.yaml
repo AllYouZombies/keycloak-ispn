@@ -39,8 +39,11 @@ spec:
                 echo "$(date) - Loading environment secrets from Vault"
                 source /vault/secrets/env
               fi
-              echo "user create ${ISPN_ADMIN} -p ${ISPN_ADMIN_PASSWORD} -g admin" > /opt/infinispan/identities-batch
-              echo "user create monitor -p monitor --users-file metrics-users.properties --groups-file metrics-groups.properties" >> /opt/infinispan/identities-batch
+              touch /opt/infinispan/identities-batch
+              {{- if .Values.ispn.identitiesBatch }}
+              cat /opt/infinispan/identities-batch-secret >> /opt/infinispan/identities-batch && echo "" >> /opt/infinispan/identities-batch
+              {{- end }}
+              echo "user create ${ISPN_ADMIN} -p ${ISPN_ADMIN_PASSWORD} -g admin" >> /opt/infinispan/identities-batch
               /opt/infinispan/bin/launch.sh -Dinfinispan.cluster.stack=kubernetes -Djgroups.dns.query="{{ printf "%s-ispn-ping.%s" (include "keycloak-ispn.fullname" .) .Release.Namespace }}" -Dinfinispan.deserialization.allowlist.classes=java.time.Instant,org.keycloak.cluster.infinispan.WrapperClusterEvent -Dinfinispan.deserialization.allowlist.regexps=.*
           ports:
             - name: hotrod
@@ -69,10 +72,21 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /opt/infinispan/data
+            {{- if .Values.ispn.identitiesBatch }}
+            - name: identities-batch
+              mountPath: /opt/infinispan/identities-batch-secret
+              subPath: identities-batch
+            {{- end }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           resources:
             {{- toYaml .Values.ispn.resources | nindent 12 }}
+      {{- if .Values.ispn.identitiesBatch }}
+      volumes:
+        - name: identities-batch
+          secret:
+            secretName: {{ include "keycloak-ispn.fullname" . }}-identities-batch
+      {{- end }}
       {{- with .Values.ispn.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
