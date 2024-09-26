@@ -56,7 +56,7 @@
                               marshaller="org.keycloak.cluster.infinispan.KeycloakHotRodMarshallerFactory">
                     <remote-server host="${env.KC_REMOTE_STORE_HOST}"
                                    port="${env.KC_REMOTE_STORE_PORT}"/>
-                    <connection-pool max-active="16"
+                    <connection-pool max-active="64"
                                      exhausted-action="CREATE_NEW"/>
                     <security>
                         <authentication server-name="infinispan">
@@ -79,7 +79,7 @@
                               marshaller="org.keycloak.cluster.infinispan.KeycloakHotRodMarshallerFactory">
                     <remote-server host="${env.KC_REMOTE_STORE_HOST}"
                                    port="${env.KC_REMOTE_STORE_PORT}"/>
-                    <connection-pool max-active="16"
+                    <connection-pool max-active="64"
                                      exhausted-action="CREATE_NEW"/>
                     <security>
                         <authentication server-name="infinispan">
@@ -102,7 +102,7 @@
                               marshaller="org.keycloak.cluster.infinispan.KeycloakHotRodMarshallerFactory">
                     <remote-server host="${env.KC_REMOTE_STORE_HOST}"
                                    port="${env.KC_REMOTE_STORE_PORT}"/>
-                    <connection-pool max-active="16"
+                    <connection-pool max-active="64"
                                      exhausted-action="CREATE_NEW"/>
                     <security>
                         <authentication server-name="infinispan">
@@ -125,7 +125,7 @@
                               marshaller="org.keycloak.cluster.infinispan.KeycloakHotRodMarshallerFactory">
                     <remote-server host="${env.KC_REMOTE_STORE_HOST}"
                                    port="${env.KC_REMOTE_STORE_PORT}"/>
-                    <connection-pool max-active="16"
+                    <connection-pool max-active="64"
                                      exhausted-action="CREATE_NEW"/>
                     <security>
                         <authentication server-name="infinispan">
@@ -148,7 +148,7 @@
                               marshaller="org.keycloak.cluster.infinispan.KeycloakHotRodMarshallerFactory">
                     <remote-server host="${env.KC_REMOTE_STORE_HOST}"
                                    port="${env.KC_REMOTE_STORE_PORT}"/>
-                    <connection-pool max-active="16"
+                    <connection-pool max-active="64"
                                      exhausted-action="CREATE_NEW"/>
                     <security>
                         <authentication server-name="infinispan">
@@ -171,7 +171,7 @@
                               marshaller="org.keycloak.cluster.infinispan.KeycloakHotRodMarshallerFactory">
                     <remote-server host="${env.KC_REMOTE_STORE_HOST}"
                                    port="${env.KC_REMOTE_STORE_PORT}"/>
-                    <connection-pool max-active="16"
+                    <connection-pool max-active="64"
                                      exhausted-action="CREATE_NEW"/>
                     <security>
                         <authentication server-name="infinispan">
@@ -194,7 +194,7 @@
                               marshaller="org.keycloak.cluster.infinispan.KeycloakHotRodMarshallerFactory">
                     <remote-server host="${env.KC_REMOTE_STORE_HOST}"
                                    port="${env.KC_REMOTE_STORE_PORT}"/>
-                    <connection-pool max-active="16"
+                    <connection-pool max-active="64"
                                      exhausted-action="CREATE_NEW"/>
                     <security>
                         <authentication server-name="infinispan">
@@ -222,7 +222,7 @@
                               marshaller="org.keycloak.cluster.infinispan.KeycloakHotRodMarshallerFactory">
                     <remote-server host="${env.KC_REMOTE_STORE_HOST}"
                                    port="${env.KC_REMOTE_STORE_PORT}"/>
-                    <connection-pool max-active="16"
+                    <connection-pool max-active="64"
                                      exhausted-action="CREATE_NEW"/>
                     <security>
                         <authentication server-name="infinispan">

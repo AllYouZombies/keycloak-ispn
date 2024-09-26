@@ -10,28 +10,10 @@
       <security>
          <authorization/>
       </security>
-       <distributed-cache-configuration name="distributed-cache-configuration" owners="2" mode="SYNC" statistics="true">
-          <state-transfer enabled="true" timeout="60000" await-initial-transfer="false"/>
-          <encoding media-type="application/x-jboss-marshalling"/>
-          <memory storage="OFF_HEAP"/>
-          <persistence passivation="false">
-              <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:15.0" dialect="POSTGRES">
-                  <string-keyed-table prefix="ISPN_STRING_TABLE" create-on-start="true">
-                      <id-column name="ID_COLUMN" type="TEXT"/>
-                      <data-column name="DATA_COLUMN" type="BYTEA"/>
-                      <timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT"/>
-                      <segment-column name="SEGMENT_COLUMN" type="INT"/>
-                  </string-keyed-table>
-                  <connection-pool username="${env.DB_USERNAME}" password="${env.DB_PASSWORD}" driver="org.postgresql.Driver" connection-url="jdbc:postgresql://${env.DB_HOST}:${env.DB_PORT}/${env.DB_NAME}"/>
-              </string-keyed-jdbc-store>
-          </persistence>
-          <security>
-              <authorization enabled="true" roles="observer application admin monitor deployer"/>
-          </security>
-      </distributed-cache-configuration>
       <replicated-cache-configuration name="replicated-cache-configuration" mode="SYNC" statistics="true">
+          <state-transfer enabled="false" timeout="600000" await-initial-transfer="false"/>
           <encoding media-type="application/x-jboss-marshalling"/>
-          <memory storage="OFF_HEAP"/>
+          <memory storage="HEAP"/>
           <persistence passivation="false">
               <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:15.0" dialect="POSTGRES">
                   <string-keyed-table prefix="ISPN_STRING_TABLE" create-on-start="true">
@@ -47,13 +29,13 @@
               <authorization enabled="true" roles="observer application admin monitor deployer"/>
           </security>
       </replicated-cache-configuration>
-      <distributed-cache name="sessions" configuration="distributed-cache-configuration"/>
-      <distributed-cache name="authenticationSessions" configuration="distributed-cache-configuration"/>
-      <distributed-cache name="offlineSessions" configuration="distributed-cache-configuration"/>
-      <distributed-cache name="clientSessions" configuration="distributed-cache-configuration"/>
-      <distributed-cache name="offlineClientSessions" configuration="distributed-cache-configuration"/>
-      <distributed-cache name="loginFailures" configuration="distributed-cache-configuration"/>
-      <distributed-cache name="actionTokens" configuration="distributed-cache-configuration"/>
+      <replicated-cache name="sessions" configuration="replicated-cache-configuration"/>
+      <replicated-cache name="authenticationSessions" configuration="replicated-cache-configuration"/>
+      <replicated-cache name="offlineSessions" configuration="replicated-cache-configuration"/>
+      <replicated-cache name="clientSessions" configuration="replicated-cache-configuration"/>
+      <replicated-cache name="offlineClientSessions" configuration="replicated-cache-configuration"/>
+      <replicated-cache name="loginFailures" configuration="replicated-cache-configuration"/>
+      <replicated-cache name="actionTokens" configuration="replicated-cache-configuration"/>
       <replicated-cache name="work" configuration="replicated-cache-configuration"/>
    </cache-container>
 

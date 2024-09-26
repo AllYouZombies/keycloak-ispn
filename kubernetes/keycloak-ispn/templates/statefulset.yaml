@@ -57,7 +57,7 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 5
-            failureThreshold: 5
+            failureThreshold: 20
           readinessProbe:
             httpGet:
               path: /rest/v2/container/health/status
@@ -65,7 +65,7 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 5
-            failureThreshold: 5
+            failureThreshold: 20
           volumeMounts:
             - name: data
               mountPath: /opt/infinispan/data
