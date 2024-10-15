@@ -26,7 +26,7 @@ services:
       - postgresql_data:/var/lib/postgresql/data
 
   infinispan:
-    image: infinispan/server:15.0.7.Final
+    image: oshpalov/kc-ha-infinispan:15.0.7.Final
     build:
       context: .
       dockerfile: infinispan.Dockerfile
@@ -38,7 +38,7 @@ services:
       sh -c "
         echo 'user create ${ISPN_ADMIN:-admin} -p ${ISPN_ADMIN_PASSWORD:-admin} -g admin' > /opt/infinispan/identities-batch
         echo 'user create monitor -p monitor --users-file metrics-users.properties --groups-file metrics-groups.properties' >> /opt/infinispan/identities-batch
-        /opt/infinispan/bin/launch.sh -Dinfinispan.deserialization.allowlist.classes=java.time.Instant,org.keycloak.cluster.infinispan.WrapperClusterEvent -Dinfinispan.deserialization.allowlist.regexps=.*
+        /opt/infinispan/bin/launch.sh -Dinfinispan.cluster.stack=kubernetes -Djgroups.dns.query="infinispan"  -Dinfinispan.deserialization.allowlist.classes=java.time.Instant,org.keycloak.cluster.infinispan.WrapperClusterEvent -Dinfinispan.deserialization.allowlist.regexps=.*
       "
     environment:
       TZ: ${TZ:-UTC}
@@ -62,7 +62,7 @@ services:
       - ./infinispan-server-libs:/opt/infinispan/server/lib
 
   keycloak:
-    image: keycloak:24.0.3
+    image: oshpalov/kc-ha-keycloak
     build:
       context: .
       dockerfile: keycloak.Dockerfile
