@@ -4,7 +4,7 @@ RUN dnf install --installroot /mnt/rootfs curl jq --releasever 9 --setopt instal
     dnf --installroot /mnt/rootfs clean all && \
     rpm --root /mnt/rootfs -e --nodeps setup
 
-FROM cr.smartbank.uz/dockerhub/keycloak/keycloak:24.0.3
+FROM keycloak/keycloak:24.0.3
 
 # Enable health and metrics support & configure a database vendor
 ENV KC_HEALTH_ENABLED=true KC_METRICS_ENABLED=true KC_DB=postgres
