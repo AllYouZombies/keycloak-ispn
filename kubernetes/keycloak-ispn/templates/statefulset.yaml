@@ -61,7 +61,7 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 20
-          readinessProbe:
+          startupProbe:
             httpGet:
               path: /rest/v2/container/health/status
               port: hotrod
