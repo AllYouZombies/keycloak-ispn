@@ -67,10 +67,27 @@ kc:
   resources:
     limits:
       cpu: "2"
-      memory: 1536Mi
+      memory: 4096Mi
     requests:
       cpu: "1"
-      memory: 768Mi
+      memory: 1024Mi
+
+  livenessProbe:
+    httpGet:
+      path: /health/live
+      port: http
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  startupProbe:
+    httpGet:
+      path: /health/ready
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 20
 
   nodeSelector: { }
 
