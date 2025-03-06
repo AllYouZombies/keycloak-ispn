@@ -6,7 +6,10 @@
       xmlns:server="urn:infinispan:server:15.0">
 
    <cache-container name="default" statistics="true">
-      <transport cluster="${infinispan.cluster.name:cluster}" stack="${infinispan.cluster.stack:tcp}" node-name="${infinispan.node.name:}"/>
+      <transport cluster="${infinispan.cluster.name:cluster}"
+                 stack="${infinispan.cluster.stack:tcp}"
+                 node-name="${infinispan.node.name:}"
+                 lock-timeout="30000" />
       <security>
          <authorization/>
       </security>
@@ -42,7 +45,7 @@
    <server xmlns="urn:infinispan:server:15.0">
       <interfaces>
          <interface name="public">
-            <inet-address value="${infinispan.bind.address:127.0.0.1}"/>
+            <inet-address value="${infinispan.bind.address:0.0.0.0}"/>
          </interface>
       </interfaces>
 
